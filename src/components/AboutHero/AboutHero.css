@@ -1,0 +1,179 @@
+.about-hero{
+  max-width:1280px;
+  margin: auto ;
+  padding:30px 0;
+  color:#333;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.about-hero__heading{
+  font-size:34px;
+  font-weight:700;
+  margin:8px 0 18px;
+  color:#555;
+}
+
+.about-hero__accent{
+  color:#4a90ff;
+}
+
+.about-hero__image-wrap{
+  position:relative;
+  border-radius:18px;
+  overflow:visible; /* allow badge to overlap */
+}
+
+.about-hero__image{
+  display:block;
+  width:100%;
+  aspect-ratio:1280/481;
+  object-fit:cover;
+  border-radius:18px;
+
+}
+
+@media (min-width:1280px){
+  /* Force full-size image on wide (laptop/desktop) screens */
+  .about-hero{
+    max-width:1280px;
+  }
+  .about-hero__image{
+    width:100%;
+    height:481px; /* exact pixel height for 1280x481 */
+    aspect-ratio: auto;
+  }
+    .about-hero__content{
+      margin-top:72px; /* create space so content starts below the badge area */
+    }
+    .about-hero__right{
+      padding-top:48px;
+    }
+    /* move left block further right and down for laptop and increase sizes */
+    .about-hero__left{
+      transform: translate(60px, 28px); /* move right and slightly down */
+    }
+    .about-hero__left .about-hero__pre{
+      font-size:20px;
+    }
+    .about-hero__left .about-hero__title{
+      font-size:44px;
+    }
+    .about-hero__left .about-hero__cta{
+      padding:14px 24px;
+      font-size:16px;
+    }
+}
+
+/* center badge overlapping the image with smooth rounded shape */
+.about-hero__badge {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 4px;
+  width: 220px;    
+  height: 64px;      
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;   
+  font-weight: 700;
+  color: #448AFF;
+
+}
+
+
+
+.about-hero__content{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:42px;
+  align-items:start;
+  margin-top:56px;
+}
+
+.about-hero__left{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.about-hero__pre{
+  color:#666;
+  font-size:16px;
+}
+
+.about-hero__title{
+  font-size:28px;
+  color:#3a7cff;
+  margin:0;
+  font-weight:700;
+}
+
+.about-hero__cta{
+  width:max-content;
+  padding:10px 16px;
+  border-radius:999px;
+  border:1px solid rgba(58,124,255,0.16);
+  background:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.about-hero__cta:hover {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #eef5ff 40%,
+    #cfe2ff 100%
+  );
+  box-shadow:
+    0 10px 24px rgba(74,144,255,0.28),
+    inset 0 0 0 1px rgba(74,144,255,0.4);
+}
+
+
+.about-hero__right{
+  color:#666;
+  font-family: 'Reddit Sans', Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-weight:400;
+  font-style:normal;
+  font-size:24px; /* laptop/desktop */
+  line-height:100%;
+
+  letter-spacing:0%;
+  padding-top:40px; /* push content to start below the centered badge */
+}
+
+/* Tablet */
+@media (max-width:1024px){
+  .about-hero{
+    margin: auto;
+    padding:30px ;
+  }
+  .about-hero__heading{font-size:28px}
+  .about-hero__image{border-radius:14px}
+  .about-hero__badge{bottom:-5px;padding:10px 26px;font-size: 26px;}
+  .about-hero__content{gap:28px;margin-top:40px;}
+  .about-hero__right{padding-top:34px; font-size:18px; line-height:120%;}
+}
+
+/* Mobile */
+@media (max-width:640px){
+  .about-hero{
+    margin: auto;
+    padding:30px ;
+  }
+  .about-hero__heading{
+    font-size:22px;
+    margin-bottom:12px;
+  }
+  .about-hero__image{aspect-ratio:16/9;border-radius:12px}
+  .about-hero__badge{bottom:-18px;padding:8px 18px;font-size:14px}
+  .about-hero__content{
+    grid-template-columns:1fr;
+    gap:18px;
+    margin-top:32px;
+  }
+  .about-hero__right{padding-top:18px; font-size:16px; line-height:140%;}
+  .about-hero__title{font-size:22px}
+}
