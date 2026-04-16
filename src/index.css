@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+
+body {
+  font-family: 'Reddit Sans', sans-serif;
+}
 html {
   scroll-behavior: smooth;
 }

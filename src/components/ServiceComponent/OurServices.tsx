@@ -19,6 +19,8 @@ import { IoIosArrowRoundForward } from "react-icons/io"
 import { useNavigate } from "react-router-dom"
 import api from "../../utils/api"
 import { getImage } from "../../utils/getBackendImg"
+import { toast } from "react-hot-toast"
+import { useAppSelector } from "../../redux/hooks"
 
 interface ServiceItem {
   id: number
@@ -112,13 +114,14 @@ const OurServices: React.FC = () => {
   const navigate = useNavigate()
   const [services, setServices] = useState<Service[]>([])
   const DEFAULT_IMAGE = "https://placehold.co/400x300?text=Laundry+Service"
+  const { user, authChecked,isServiceable } = useAppSelector((s) => s.auth)
+
   useEffect(() => {
     const loadServices = async () => {
       try {
         const res = await api.get("/service/all/details", {
           withCredentials: true,
         })
-        console.log(res)
         const data = await res.data
 
         if (data.success) {
@@ -143,7 +146,7 @@ const OurServices: React.FC = () => {
     <section className="px-16 sm:px-8 lg:px-16  font-['Reddit_sans]  ">
       <div className="flex flex-col  space-y-4 mb-10">
         <h1 className=" font-bold text-[28px] sm:text-[36px] lg:text-[48px] text-[#448AFF]">
-          Our Services
+          Our Service
         </h1>
         <p className="text-[16px] sm:text-[18px] lg:text-[24px] lg:w-[624px] text-[#5D5C5C]">
           We take care of your daily and special clothes with simple, reliable
@@ -175,9 +178,19 @@ const OurServices: React.FC = () => {
 
               <div
                 className=" flex items-center  gap-2 w-[136.98px] text-[14px] sm:text-[16px] lg:text-[18px] hover:text-[#2a4676] font-medium text-[#448AFF] group cursor-pointer"
-                onClick={() =>
+                onClick={() => {
+
+                   if (!user || !authChecked ) {
+                    navigate("/login")
+                    return
+                  }
+
+                  if (!isServiceable) {
+                    navigate("/check-location")
+                    return
+                  }
                   navigate(`/service/details?services=${service.id}`)
-                }
+                }}
               >
                 View details
                 <IoIosArrowRoundForward
@@ -194,4 +207,3 @@ const OurServices: React.FC = () => {
 }
 
 export default OurServices
-  

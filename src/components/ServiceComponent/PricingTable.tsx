@@ -1,80 +1,47 @@
-interface PricingItem {
-  id: string
-  costume: string
-  washAndFold: string | null
-  washAndIroning: string | null
-  steamPress: string | null
-  dryClean: string | null
-  stitchingNote: string | null
-}
 import { useEffect, useState } from "react"
 import axios from "axios"
-import api from "../../utils/api"
 
 const PricingTable = () => {
-  // const [items, setItems] = useState<PricingItem[]>([])
   const [headers, setHeaders] = useState<string[]>([])
   const [items, setItems] = useState<any[]>([])
-  const [visibleRows, setVisibleRows] = useState(15)
+  const [visibleRows, setVisibleRows] = useState(10)
 
-  // FETCH FROM BACKEND
+  // FETCH DATA
   useEffect(() => {
     const fetchItems = async () => {
-      const res = await api.get("/service/service-items")
-      console.log(res)
-      // setItems(res.data)
-    }
+      try {
+        const res = await axios.get(
+          "http://localhost:5001/api/super_admin/service/service-item/rate",
+          { withCredentials: true },
+        )
 
-    fetchItems()
-  }, [])
-
-  useEffect(() => {
-    const fetchItems = async () => {
-      const res = await api.get("/super_admin/service/service-item/rate")
-
-      setHeaders(res.data.data.headers)
-      setItems(res.data.data.rows)
-    }
-
-    fetchItems()
-  }, [])
-
-  // INFINITE SCROLL (UNCHANGED)
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >=
-        document.body.offsetHeight - 100
-      ) {
-        setVisibleRows((prev) => Math.min(prev + 5, items.length))
+        setHeaders(res.data.data.headers)
+        setItems(res.data.data.rows)
+      } catch (err) {
+        console.error(err)
       }
     }
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [items])
+    fetchItems()
+  }, [])
 
-  // const headers = [
-  //   { label: "Costume", width: "w-[250px]" },
-  //   { label: "Wash & Fold", width: "w-[186px]" },
-  //   { label: "Wash & Ironing", width: "w-[186px]" },
-  //   { label: "Steam Press", width: "w-[186px]" },
-  //   { label: "Dry Clean", width: "w-[186px]" },
-  //   { label: "Stitching", width: "w-[186px]" },
-  // ]
+  // LOAD MORE BUTTON
+  const handleLoadMore = () => {
+    setVisibleRows((prev) => Math.min(prev + 10, items.length))
+  }
 
   return (
-    <div className="max-w-[1500px] rounded-xl px-12 mb-2">
-      {/* scroll container */}
-      <div className="h-[700px] overflow-auto  rounded-xl custom-scrollbar-table pr-2  pb-4">
+    <div className="max-w-[1500px]  mx-auto  mt-8 rounded-xl px-6  font-[Reddit-Sans]">
+      {/* TABLE CONTAINER */}
+      <div className="overflow-auto rounded-xl  shadow-sm">
         <table className="w-full table-fixed border-collapse text-center">
           {/* HEADER */}
           <thead className="sticky top-0 z-10">
-            <tr className="bg-[#639EFF] text-white h-[155px]">
+            <tr className="bg-gradient-to-r from-blue-500 to-blue-400 text-white">
               {headers.map((head) => (
                 <th
                   key={head}
-                  className="border border-white px-4 font-medium text-[20px] w-[180px]"
+                  className="px-4 py-4 font-semibold text-[18px] border border-white"
                 >
                   {head}
                 </th>
@@ -87,12 +54,13 @@ const PricingTable = () => {
             {items.slice(0, visibleRows).map((row, index) => (
               <tr
                 key={index}
-                className="text-[#5D5C5C] text-[18px] hover:bg-blue-50 transition"
+                className="text-gray-600 text-[16px] hover:bg-blue-50 transition"
               >
                 {headers.map((head) => (
                   <td
                     key={head}
-                    className="border border-gray-300 px-4 py-6 w-[180px] truncate"
+                    className="border border-gray-200 px-4 py-3 truncate"
+                    title={row[head]}
                   >
                     {row[head] ?? "NA"}
                   </td>
@@ -102,6 +70,18 @@ const PricingTable = () => {
           </tbody>
         </table>
       </div>
+
+      {/* LOAD MORE BUTTON */}
+      {visibleRows < items.length && (
+        <div className="flex justify-center mt-6 pb-5">
+          <button
+            onClick={handleLoadMore}
+            className=" text-blue-600   hover:underline"
+          >
+            View More
+          </button>
+        </div>
+      )}
     </div>
   )
 }

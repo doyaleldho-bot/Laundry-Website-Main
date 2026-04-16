@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react"
 import api from "../../utils/api"
 import ordersIcon from "../../assets/icons/orders_icon.svg"
 import itemsIcon from "../../assets/icons/items_icon.svg"
+import starIcon from "../../assets/icons/review_star.svg"
+import Complaint from "../Review/Complaint"
+import Rating from "../Review/Rating"
 
 interface Order {
   id: string
@@ -21,6 +24,7 @@ interface OrderStats {
   active: number
 }
 
+
 const OrderHistory = () => {
   const [orders, setOrders] = useState<Order[]>([])
   const [stats, setStats] = useState<OrderStats>({
@@ -30,6 +34,9 @@ const OrderHistory = () => {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [showComplaint, setShowComplaint] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | number | null>(null)
+  const [showRating, setShowRating] = useState(false)
 
   useEffect(() => {
     fetchOrderHistory()
@@ -203,16 +210,68 @@ const OrderHistory = () => {
               </div>
 
               {/* Total */}
-              <div className="flex justify-between items-center mt-4 pt-3 border-t">
+              <div className="flex justify-between items-center mt-4 pt-3 ">
                 <span className="text-sm text-gray-500">Total</span>
                 <span className="text-base font-semibold text-[#2563EB]">
                   ₹{Number(order.totalAmount).toFixed(0)}
                 </span>
               </div>
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mt-8">
+
+                {/* Rate Experience Button */}
+                <button
+                  onClick={() => {
+                    setSelectedOrderId(order.orderID)
+                    setShowRating(true)
+                  }}
+                  className="w-full sm:w-[211px] h-[40px] border border-[#448AFF] rounded-[7px] px-3 py-2 text-[#448AFF] text-sm sm:text-base font-medium hover:bg-blue-50 transition flex items-center justify-center sm:justify-start gap-2"
+                >
+                  <img src={starIcon} alt="rate" className="w-4 h-4" />
+                  Rate your Experience
+                </button>
+
+                {/* Complaint Link */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedOrderId(order.orderID)
+                    setShowComplaint(true)
+                  }}
+
+                  className="text-[14px] sm:text-[16px] font-normal underline text-[#01358D] hover:opacity-80 transition"
+                >
+                  Complaints?
+                </button>
+
+              </div>
             </div>
+
           ))}
+
         </div>
-      </div>
+
+
+      </div >
+      {showComplaint && selectedOrderId != null && (
+        <Complaint
+          orderId={selectedOrderId?.toString() ?? ""}
+          onClose={() => {
+            setShowComplaint(false)
+            setSelectedOrderId(null)
+          }}
+        />
+      )}
+
+      {showRating && selectedOrderId && (
+        <Rating
+          orderId={selectedOrderId?.toString() ?? ""}
+          onClose={() => {
+            setShowRating(false)
+            setSelectedOrderId(null)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -3,17 +3,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AuthModal from '../../components/auth/AuthModal';
 import { authService } from '../../services/authService';
 
-const LoginPage: React.FC = () => {
+const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Determine where to redirect after login (or if cancelled)
+    // Determine where to redirect after register (or if cancelled)
     // ProtectedRoute passes 'from' in location.state
     const from = (location.state as any)?.from?.pathname || '/';
 
     const handleClose = () => {
         // If authenticated, go to the intended page.
-        // If NOT authenticated, it means the user cancelled the login.
+        // If NOT authenticated, it means the user cancelled the register.
         // We should send them to Home or back, NOT to 'from' (which is protected).
 
         if (authService.isAuthenticated()) {
@@ -27,13 +27,13 @@ const LoginPage: React.FC = () => {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            {/* 
-              We force the modal to be open. 
+            {/*
+              We force the modal to be open.
               The modal has its own backdrop, but we add a container just in case.
             */}
-            <AuthModal isOpen={true} onClose={handleClose} initialView="LOGIN" />
+            <AuthModal isOpen={true} onClose={handleClose} initialView="REGISTER" />
         </div>
     );
 };
 
-export default LoginPage;
+export default RegisterPage;

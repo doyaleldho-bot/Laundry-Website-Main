@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import PickupAddress from "./PickupAddress"
 import OrderSummary from "./OrderSummary"
 
@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import { getAddresses } from "../../redux/action/authThunks"
 import AddressList from "./AddressList"
 import AddressForm from "./AddressForm"
+import { getCartDetails } from "../../redux/action/cartThunks"
 
 export interface PickupFormData {
   apartment: string
@@ -40,24 +41,53 @@ const SchedulePickupMain = () => {
   const [isChangeAddress, setIsChangeAddress] = useState<boolean>(false)
   const [isOpenForm, setIsOpenForm] = useState<boolean>(false)
   const [selectAddress, setSelectAddress] = useState<SelectAddress | null>(null)
+  const locationState = (location.state || {}) as {
+    itemsCount?: number
+    itemsTotal?: number
+    type?: "PIECE" | "WEIGHT"
+    weight?: number
+    pricePerKg?: number
+    services?: string[]
+    items?: Array<{
+      title: string
+      serviceType: string[]
+      quantity: number
+      unitType: "PIECE" | "WEIGHT"
+      unitPrice: number
+      totalPrice: number
+    }>
+  }
+
   const {
     itemsCount = 0,
     itemsTotal = 0,
-    pickupCharge = 50,
     type = "PIECE",
     weight = 0,
     pricePerKg = 0,
     services = [],
-    totalAmount = 0,
-    items = [],
-  } = location.state || {}
+    items: locationItems = [],
+  } = locationState
 
   const dispatch = useAppDispatch()
+  // CART DATA FROM REDUX
+  const { items, totalAmount, itemCount } = useAppSelector(
+    (state) => state.cart
+  )
+
+  const pickupCharge = 50
+
+  useEffect(() => {
+    dispatch(getCartDetails())
+  }, [dispatch])
 
   const displayedItemsCount =
-    type === "WEIGHT" ? (itemsCount || (weight > 0 ? 1 : 0)) : itemsCount
+    type === "WEIGHT"
+      ? itemsCount || (weight > 0 ? 1 : 0)
+      : itemsCount || itemCount
   const displayedItemsTotal =
-    type === "WEIGHT" ? (totalAmount || itemsTotal) : itemsTotal
+    type === "WEIGHT"
+      ? itemsTotal || totalAmount
+      : itemsTotal || totalAmount
   const weightInfo =
     type === "WEIGHT"
       ? {
@@ -66,6 +96,36 @@ const SchedulePickupMain = () => {
           services,
         }
       : null
+
+  type PickupSummaryItem = {
+    title: string
+    serviceType: string[]
+    quantity: number
+    unitType: "PIECE" | "WEIGHT"
+    unitPrice: number
+    totalPrice: number
+  }
+
+  const cartSummaryItems: PickupSummaryItem[] = items.map((item) => ({
+    title: item.title,
+    serviceType: Array.isArray(item.serviceType)
+      ? item.serviceType
+      : typeof item.serviceType === "string"
+      ? item.serviceType
+          .split(" /")
+          .map((service) => service.trim())
+          .filter(Boolean)
+      : [],
+    quantity: item.quantity,
+    unitType: item.unitType === "WEIGHT" ? "WEIGHT" : "PIECE",
+    unitPrice: item.unitPrice,
+    totalPrice: item.totalPrice,
+  }))
+
+  const summaryItems: PickupSummaryItem[] =
+    type === "PIECE" && Array.isArray(locationItems) && locationItems.length > 0
+      ? locationItems
+      : cartSummaryItems
 
   const [formData, setFormData] = useState<PickupFormData>({
     apartment: "",
@@ -152,7 +212,7 @@ const SchedulePickupMain = () => {
               pickupCharge={pickupCharge}
               type={type}
               weightInfo={weightInfo}
-              items={items}
+              items={summaryItems}
             />
           )}
         </div>

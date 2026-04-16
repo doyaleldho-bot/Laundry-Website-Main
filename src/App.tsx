@@ -7,6 +7,9 @@ import { getProfile } from "./redux/action/authThunks"
 import SocketProvider from "./context/SocketProvider"
 import AppLayout from "./layout/AppLayout"
 // import api from "./utils/api"
+import { LoadScript } from "@react-google-maps/api";
+
+const GOOGLE_LIBS: ("places")[] = ["places"];
 
 const App = () => {
   const { authChecked } = useAppSelector((s) => s.auth)
@@ -17,9 +20,14 @@ const App = () => {
     if (!authChecked) {
       dispatch(getProfile())
     }
-  }, [dispatch, authChecked])
+    
+  }, [dispatch,authChecked])
 
   return (
+       <LoadScript
+      googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_KEY}
+      libraries={GOOGLE_LIBS}
+    >
     <AuthProvider>
       <SocketProvider>
         <AppLayout>
@@ -29,6 +37,7 @@ const App = () => {
         </AppLayout>
       </SocketProvider>
     </AuthProvider>
+    </LoadScript>
   )
 }
 

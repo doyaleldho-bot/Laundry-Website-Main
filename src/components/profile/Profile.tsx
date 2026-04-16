@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react"
 import { useForm, Controller } from "react-hook-form"
-import axios from "axios"
 import { User, Phone, Mail, MapPin, Plus, Edit2, X, Check } from "lucide-react"
 import toast from "react-hot-toast"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
 import { FiUser } from "react-icons/fi"
+
 import {
   deleteAddress,
   getAddresses,
@@ -12,6 +12,10 @@ import {
   updateProfileAddress,
 } from "../../redux/action/authThunks"
 import Swal from "sweetalert2"
+import { Autocomplete } from "@react-google-maps/api";
+import { useRef } from "react";
+import { MdContentCopy } from "react-icons/md"
+import referal from '../../assets//icons/referal.svg'
 
 interface Address {
   id: string
@@ -27,6 +31,7 @@ interface ProfileFormData {
   fullName: string
   phone: string
   email: string
+  referralCode?: string
 }
 
 interface AddressFormData {
@@ -46,6 +51,7 @@ const Profile: React.FC = () => {
   const [editingFields, setEditingFields] = useState<Set<string>>(new Set())
   const [isAddingAddress, setIsAddingAddress] = useState(false)
   const dispatch = useAppDispatch()
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   // React Hook Form for profile
   const {
@@ -63,7 +69,7 @@ const Profile: React.FC = () => {
   })
 
   // React Hook Form for address
-  const {
+  const { 
     register: registerAddress,
     handleSubmit: handleAddressSubmit,
     setValue,
@@ -104,7 +110,7 @@ const Profile: React.FC = () => {
 
       const payload = {
         name: formData.fullName,
-        phone: formData.phone,
+        mobileNumber: formData.phone,
         email: formData.email,
         addressLine: selectedAddress.addressLine,
         city: selectedAddress.city,
@@ -123,30 +129,6 @@ const Profile: React.FC = () => {
       toast.error("Failed to update profile")
     }
   }
-
-  //  const onAddAddressSubmit = (addressData: AddressFormData) => {
-  //   const newAddress: Address = {
-  //     id:  crypto.randomUUID(),
-  //     label: `Address ${addresses.length + 1}`,
-  //     addressLine: addressData.apartment,
-  //     state: addressData.state,
-  //     postalCode: addressData.postalCode,
-  //     city: addressData.city,
-  //     landmark: addressData.landmark,
-  //   };
-
-  //   const updatedAddresses = [...addresses, newAddress];
-
-  //   const profileValues = watchProfile(); // grab current profile data
-  //   setAddresses(updatedAddresses);
-  //     setValue('apartment', '');
-  //   setValue('state', '');
-  //   setValue('landmark', '');
-  //   setValue('city', '');
-  //   setValue('postalCode', '');
-  //   setIsAddingAddress(false);
-  //   toast.success('Address added successfully!');
-  // };
 
   const onAddAddressSubmit = async (addressData: AddressFormData) => {
     try {
@@ -238,6 +220,7 @@ const Profile: React.FC = () => {
             fullName: user?.name || "",
             phone: user.phone || "",
             email: user.email || "",
+            referralCode: user.referralCode || "",
           })
         }
       })
@@ -264,6 +247,8 @@ const Profile: React.FC = () => {
       })
       .catch((err) => console.error("Failed to fetch addresses:", err))
   }, [dispatch, resetProfile])
+
+
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
       {/* Main Container - Responsive width */}
@@ -300,41 +285,75 @@ const Profile: React.FC = () => {
               </h2>
 
               {/* Full Name */}
-              <div className="mb-4 sm:mb-6">
-                <label className="flex items-center text-gray-700 text-xs sm:text-sm font-medium mb-2">
-                  <User className="w-4 h-4 mr-2 text-gray-400" />
-                  Full Name
-                </label>
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <input
-                    type="text"
-                    {...registerProfile("fullName", {
-                      required: "Full name is required",
-                    })}
-                    disabled={!editingFields.has("fullName")}
-                    className={`flex-1 border rounded px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:outline-none transition ${
-                      editingFields.has("fullName")
-                        ? "bg-white border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
-                        : "bg-gray-100 border-gray-200 text-gray-700"
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => toggleEditField("fullName")}
-                    className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition"
-                  >
-                    {editingFields.has("fullName") ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Edit2 className="w-4 h-4" />
-                    )}
-                  </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+
+                {/* FULL NAME */}
+                <div>
+                  <label className="flex items-center text-gray-700 text-xs sm:text-sm font-medium mb-2">
+                    <User className="w-4 h-4 mr-2 text-gray-400" />
+                    Full Name
+                  </label>
+
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <input
+                      type="text"
+                      {...registerProfile("fullName", {
+                        required: "Full name is required",
+                      })}
+                      disabled={!editingFields.has("fullName")}
+                      className={`flex-1 border rounded px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:outline-none transition ${editingFields.has("fullName")
+                          ? "bg-white border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
+                          : "bg-gray-100 border-gray-200 text-gray-700"
+                        }`}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => toggleEditField("fullName")}
+                      className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                    >
+                      {editingFields.has("fullName") ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Edit2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+
+                  {profileErrors.fullName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {profileErrors.fullName.message}
+                    </p>
+                  )}
                 </div>
-                {profileErrors.fullName && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {profileErrors.fullName.message}
-                  </p>
-                )}
+
+                {/* REFERRAL CODE */}
+                <div>
+                  <label className="flex items-center text-gray-700 text-xs sm:text-sm font-medium mb-2">
+                    <img src={referal} alt="referral" className="w-4 h-4 mr-2" />
+                    Referral Code
+                  </label>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <input
+                      type="text"
+                      value={watchProfile("referralCode") || "" }
+                      readOnly
+                      className="flex-1 border rounded px-3 sm:px-4 py-2.5 sm:py-3 text-sm bg-gray-100 border-gray-200 text-gray-700"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText("AFFD57LK70")
+                        toast.success("Copied!")
+                      }}
+                      className="p-2 sm:p-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center gap-1"
+                    >
+                      <MdContentCopy className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
               </div>
 
               {/* Phone Number */}
@@ -350,11 +369,10 @@ const Profile: React.FC = () => {
                       required: "Phone number is required",
                     })}
                     disabled={!editingFields.has("phoneNumber")}
-                    className={`flex-1 border rounded px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:outline-none transition ${
-                      editingFields.has("phoneNumber")
-                        ? "bg-white border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
-                        : "bg-gray-100 border-gray-200 text-gray-700"
-                    }`}
+                    className={`flex-1 border rounded px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:outline-none transition ${editingFields.has("phoneNumber")
+                      ? "bg-white border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
+                      : "bg-gray-100 border-gray-200 text-gray-700"
+                      }`}
                   />
                   <button
                     type="button"
@@ -388,11 +406,10 @@ const Profile: React.FC = () => {
                       required: "Email is required",
                     })}
                     disabled={!editingFields.has("email")}
-                    className={`flex-1 border rounded px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:outline-none transition ${
-                      editingFields.has("email")
-                        ? "bg-white border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
-                        : "bg-gray-100 border-gray-200 text-gray-700"
-                    }`}
+                    className={`flex-1 border rounded px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:outline-none transition ${editingFields.has("email")
+                      ? "bg-white border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
+                      : "bg-gray-100 border-gray-200 text-gray-700"
+                      }`}
                   />
                   <button
                     type="button"
@@ -415,7 +432,9 @@ const Profile: React.FC = () => {
             </div>
 
             {/* Pickup Address Section */}
-            <div>
+
+            
+   <div>
               <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center">
                 <MapPin className="w-5 h-5 mr-2 text-gray-400" />
                 Pickup Address
@@ -599,6 +618,42 @@ const Profile: React.FC = () => {
                 </div>
               )}
             </div>
+
+
+            {/* <div>
+              <label className="block text-gray-700 text-xs font-semibold mb-2 uppercase tracking-wider">
+                Street / Locality
+              </label>
+
+              <Autocomplete
+                onLoad={(auto) => (autocompleteRef.current = auto)}
+                onPlaceChanged={() => {
+                  const place = autocompleteRef.current?.getPlace()
+                  const components = place?.address_components || []
+
+                  const get = (type: string) =>
+                    components.find((c) => c.types.includes(type))?.long_name || ""
+
+                  const apartment =
+                    place?.name || place?.formatted_address || ""
+
+                  setValue("apartment", apartment)
+
+                  setValue("city", get("locality") || get("administrative_area_level_2"))
+                  setValue("state", get("administrative_area_level_1"))
+                  setValue("postalCode", get("postal_code"))
+
+                  // ⚠️ landmark is NOT reliable from Google
+                  setValue("landmark", "")
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search address"
+                  className="w-full bg-white border border-gray-200 rounded px-3 sm:px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200"
+                />
+              </Autocomplete>
+            </div> */}
 
             {/* Footer Buttons */}
             <div className="bg-0 border-t border-gray-200 -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8 py-4 sm:py-6 flex gap-2 sm:gap-3">

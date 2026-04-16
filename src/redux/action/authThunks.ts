@@ -135,12 +135,13 @@ export const updateProfileAddress = createAsyncThunk(
       const payload = {
         name: data?.name || user?.name || "",
         mobileNumber: data?.mobileNumber || user?.phone || "",
+        email: data?.email || user?.email || "",
         ...data,
       }
       const res = await api.put(
         addressId
-          ? `/auth/update-profile/${addressId}`
-          : "/auth/update-profile",
+          ? `/auth/address/${addressId}`
+          : "/auth/new/address",
         payload,
       )
       return res.data
@@ -177,3 +178,24 @@ export const setDefaultAddress = createAsyncThunk(
     }
   },
 )
+
+
+// CHECK DELIVERY (PINCODE)
+export const checkDelivery = createAsyncThunk(
+  "location/checkDelivery",
+  async (pincode: string, { rejectWithValue }) => {
+    try {
+      const res = await api.post("/check-delivery", { pincode });
+
+      return {
+        pincode,
+        serviceable: res.data?.accessible ,
+        message: res.data?.message,
+      };
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to check delivery"
+      );
+    }
+  }
+);

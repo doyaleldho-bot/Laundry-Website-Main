@@ -35,6 +35,7 @@ type Service = {
   pricePerKg: number
   id: string
   name: string
+  description: string
 }
 
 const ServiceDetails = () => {
@@ -419,6 +420,11 @@ const ServiceDetails = () => {
     .filter((s) => selectedServiceIds.includes(s.id))
     .map((s) => s.name)
 
+    const selectedServiceDescription = services
+    .filter((s) => selectedServiceIds.includes(s.id))
+    .map((s) => `${s.name} - ${s.description}`)
+    .join("  ")
+
   const displayItems =
     cartItems?.map((item: any) => {
       const qty = Number(item.quantity || 0)
@@ -450,7 +456,7 @@ const ServiceDetails = () => {
       </h1>
 
       <p className="mt-5 text-[16px] sm:text-[18px] md:text-[20px] lg:text-[24px] text-[#7D7D7D] mb-6 w-full text-justify">
-        Choose from the options below. Select Per Piece or By Weight.
+       {selectedServiceDescription || "Select services to see details and schedule pickup"}
       </p>
 
       {/* ---------- SERVICE PILLS ---------- */}

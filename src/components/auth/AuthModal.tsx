@@ -12,26 +12,29 @@ import {
   resendOtp,
   verifyOtp,
 } from "../../redux/action/authThunks"
+import { useNavigate } from "react-router-dom"
 
 type AuthView = "LOGIN" | "REGISTER" | "OTP"
 
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
+  initialView?: AuthView
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView = "REGISTER" }) => {
   // const { login } = useAuth()
   const { loading, retryAfter, expiresIn, otpIssuedAt, otpSent } =
     useAppSelector((s) => s.auth)
   const dispatch = useAppDispatch()
-  const [view, setView] = useState<AuthView>("REGISTER")
+      const navigate = useNavigate();
+  const [view, setView] = useState<AuthView>(initialView)
   const [phoneNumber, setPhoneNumber] = useState("")
   const [contextData, setContextData] = useState<{
     name?: string
     email?: string
   }>({})
-  const [authType, setAuthType] = useState<"LOGIN" | "REGISTER">("REGISTER")
+  const [authType, setAuthType] = useState<"LOGIN" | "REGISTER">(initialView === "LOGIN" ? "LOGIN" : "REGISTER")
   const [error, setError] = useState<string | null>(null)
 
   const [retryTimer, setRetryTimer] = useState<number | null>(null)
@@ -75,14 +78,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   React.useEffect(() => {
     if (!isOpen) {
       const timer = setTimeout(() => {
-        setView("REGISTER")
+        setView(initialView)
         setPhoneNumber("")
         setContextData({})
         setError(null)
       }, 300)
       return () => clearTimeout(timer)
     }
-  }, [isOpen])
+  }, [isOpen, initialView])
 
   if (!isOpen) return null
 
@@ -136,8 +139,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setError(null)
     try {
       await dispatch(verifyOtp({ otp, phone: phoneNumber })).unwrap()
-
       onClose()
+      navigate('/check-location', { replace: true }); 
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid OTP")
     }

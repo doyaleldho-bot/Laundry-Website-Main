@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { SlLocationPin } from "react-icons/sl"
 import type { SelectAddress } from "./SchedulePickupMain"
 import { useAppDispatch, useAppSelector } from "../../redux/hooks"
-import { addAddresses, updateProfileAddress } from "../../redux/action/authThunks"
+import { addAddresses, checkDelivery, updateProfileAddress } from "../../redux/action/authThunks"
 import toast from "react-hot-toast"
 
 interface AddressFormProps {
@@ -16,6 +16,9 @@ const AddressForm: React.FC<AddressFormProps> = ({
 }) => {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
+
+  const [checking, setChecking] = useState(false)
+  const [isValidPincode, setIsValidPincode] = useState<boolean | null>(null)
 
   const [form, setForm] = useState({
     name: user?.name || "",
@@ -59,6 +62,31 @@ const AddressForm: React.FC<AddressFormProps> = ({
     if (numberOnlyFields.includes(name) && !/^\d*$/.test(value)) return
     setForm((prev) => ({ ...prev, [name]: value }))
   }
+
+
+
+  useEffect(() => {
+    const validate = async () => {
+      if (form.pincode.length !== 6) {
+        setIsValidPincode(null)
+        return
+      }
+
+      setChecking(true)
+
+      const res = await dispatch(checkDelivery(form.pincode))
+
+      if (checkDelivery.fulfilled.match(res)) {
+        setIsValidPincode(res.payload.serviceable)
+      } else {
+        setIsValidPincode(false)
+      }
+
+      setChecking(false)
+    }
+
+    validate()
+  }, [form.pincode])
 
   const handleSave = async () => {
     try {
@@ -191,6 +219,26 @@ const AddressForm: React.FC<AddressFormProps> = ({
               className="bg-gray-100 rounded-md px-4 py-3 text-lg h-14 outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
+          {checking && (
+            <p className="text-sm text-gray-500 mt-1">Checking availability...</p>
+          )}
+
+          {isValidPincode === true && (
+            <p className="text-sm text-green-600 mt-1">
+              Service available in this area
+            </p>
+          )}
+
+          {isValidPincode === false && (
+            <p className="text-sm text-red-500 mt-1">
+              Service not available
+            </p>
+          )}
+          {isValidPincode === null && form.pincode.length !==6 && (
+            <p className="text-sm text-red-500 mt-1">
+              pincode must be 6 digit
+            </p>
+          )}
         </div>
 
         {/* BUTTONS (fixed at bottom) */}
@@ -201,10 +249,15 @@ const AddressForm: React.FC<AddressFormProps> = ({
           >
             Cancel
           </button>
-
           <button
             onClick={handleSave}
-            className="w-full bg-[#448AFF] text-white rounded-md py-4 text-lg hover:bg-blue-600"
+            disabled={isValidPincode === false || isValidPincode === null}
+            className={`w-full rounded-md py-4 text-lg text-white transition
+    ${isValidPincode === false || isValidPincode === null
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#448AFF] hover:bg-blue-600"
+              }
+  `}
           >
             Save
           </button>

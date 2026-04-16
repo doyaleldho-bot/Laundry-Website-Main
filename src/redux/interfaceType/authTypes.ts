@@ -33,4 +33,6 @@ export interface AuthState {
   retryAfter: number | null
   isVerified: boolean
   authChecked: boolean
+    pincode: string | null
+  isServiceable: boolean
 }

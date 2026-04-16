@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom"
 
 import api from "../../utils/api"
 import { getImage } from "../../utils/getBackendImg"
+import { useAppSelector } from "../../redux/hooks"
+import { useAutoRedirectToLogin } from "../../utils/useAutoRedirectToLogin"
 
 type Service = {
   id: string
@@ -13,11 +15,13 @@ type Service = {
 }
 
 const Services = () => {
+  useAutoRedirectToLogin(2000)
   const navigate = useNavigate()
   const [index, setIndex] = useState(0)
   const [cardsPerSlide, setCardsPerSlide] = useState(3)
 
   const [services, setServices] = useState<Service[]>([])
+  const { user, authChecked, isServiceable } = useAppSelector((s) => s.auth)
 
   const DEFAULT_IMAGE = "https://placehold.co/400x300?text=Laundry+Service"
   useEffect(() => {
@@ -26,7 +30,6 @@ const Services = () => {
         const res = await api.get("/service/all/details", {
           withCredentials: true,
         })
-        console.log(res)
         const data = await res.data
 
         if (data.success) {
@@ -95,21 +98,7 @@ const Services = () => {
           <div className="mt-6 md:mt-0 text-center md:text-right group">
             <button
               onClick={() => navigate("/service")}
-              className="
-            inline-flex
-            items-center
-            gap-2
-            px-5
-            py-2.5
-            bg-white
-            text-black
-            border
-            border-gray-300
-            rounded-full
-            font-medium
-            hover:bg-gray-100
-            transition
-          "
+              className=" inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black border border-gray-300 rounded-full font-medium hover:bg-gray-100 transition"
             >
               View more
               <ArrowUpRight
@@ -159,9 +148,19 @@ const Services = () => {
 
                       <button
                         className="mt-4 flex items-center  gap-2 w-[136.98px] text-[14px] sm:text-[16px] lg:text-[18px] hover:text-[#2a4676] font-medium text-[#448AFF] group cursor-pointer"
-                        onClick={() =>
+                        onClick={() => {
+                          if (!authChecked || !user) {
+                            navigate("/login")
+                            return
+                          }
+
+                          if (!isServiceable) {
+                            navigate("/check-location")
+                            return
+                          }
+
                           navigate(`/service/details?services=${service.id}`)
-                        }
+                        }}
                       >
                         View details
                         <ArrowUpRight
@@ -182,9 +181,8 @@ const Services = () => {
             <button
               key={i}
               onClick={() => setIndex(i)}
-              className={`h-2 rounded-full transition ${
-                i === index ? "w-6 bg-blue-500" : "w-3 bg-gray-300"
-              }`}
+              className={`h-2 rounded-full transition ${i === index ? "w-6 bg-blue-500" : "w-3 bg-gray-300"
+                }`}
             />
           ))}
         </div>

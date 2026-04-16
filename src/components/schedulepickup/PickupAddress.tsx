@@ -35,6 +35,9 @@ const PickupAddress: React.FC<PickupAddressProps> = ({
   const today = new Date().toISOString().split("T")[0]
   const [slots, setSlots] = useState<Slot[]>([]);
   const socketRef = useRef<ReturnType<typeof io> | null>(null);
+  const [checking, setChecking] = useState(false)
+  const [isValidPincode, setIsValidPincode] = useState<boolean | null>(null)
+  const dispatch = useAppDispatch()
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -62,10 +65,32 @@ const PickupAddress: React.FC<PickupAddressProps> = ({
   }
 
  
+   useEffect(() => {
+      const validate = async () => {
+        if (formData.pincode.length !== 6) {
+          setIsValidPincode(null)
+          return
+        }
+  
+        setChecking(true)
+  
+        const res = await dispatch(checkDelivery(formData.pincode))
+  
+        if (checkDelivery.fulfilled.match(res)) {
+          setIsValidPincode(res.payload.serviceable)
+        } else {
+          setIsValidPincode(false)
+        }
+  
+        setChecking(false)
+      }
+  
+      validate()
+    }, [formData.pincode])
+    
 const fetchSlots = async () => {
   try {
     const res = await api.get(`/get-slot/${formData.pickupDate || today}`);
-    console.log(res.data.data)
     setSlots(res.data?.data || []);
   } catch (err) {
     console.error("Failed to fetch slots", err);
@@ -161,6 +186,19 @@ useEffect(() => {
             className="bg-[#F0F0F0] h-[48px] lg:h-[56px] rounded-md px-3 outline-none focus:ring-2 focus:ring-[#448AFF] focus:border-[#448AFF]"
             placeholder="Mobile Number"
           />
+       <div className="mt-1">
+            {isValidPincode === false && (
+              <p className="text-xs sm:text-sm text-red-500 leading-snug">
+                Service not available in this pincode
+              </p>
+            )}
+
+            {isValidPincode === null && formData.pincode.length !==6 && (
+              <p className="text-xs sm:text-sm text-red-500 leading-snug">
+                Pincode must be 6 digits
+              </p>
+            )}
+          </div>
         </div>
 
         <h2 className="text-[24px] text-[#555555] font-medium mt-6 mb-4 flex items-center gap-4">
@@ -273,6 +311,8 @@ export default PickupAddress
 import { BsClock } from "react-icons/bs"
 import api from "../../utils/api"
 import { formatTime, formatTimeFrontend } from "../../utils/formatTime"
+import { checkDelivery } from "../../redux/action/authThunks"
+import { useAppDispatch } from "../../redux/hooks"
 
 interface TimeSlotProps {
   label: string;
@@ -293,7 +333,7 @@ const TimeSlot: React.FC<TimeSlotProps> = ({
   type="button"
   onClick={onClick}
   disabled={disabled}
-  className={`border rounded-md p-3 text-[16px] flex h-[55px] items-center justify-center gap-2 flex-col
+  className={`border rounded-md p-3 text-[16px] flex h-[55px] items-center justify-center gap-1 flex-col
     ${
       status === "FULL"
         ? "bg-red-100 text-red-500 border-red-300 cursor-not-allowed"

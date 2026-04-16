@@ -4,8 +4,10 @@ import OurServices from "../../components/ServiceComponent/OurServices"
 import LaundryInfo from "../../components/ServiceComponent/LaundryInfo"
 import img from "../../assets/images/serviceImage/Frame 513872 .svg"
 import Hero from "../../components/layout/Hero"
+import { useAutoRedirectToLogin } from "../../utils/useAutoRedirectToLogin"
 
 const ServicePage = () => {
+         useAutoRedirectToLogin(2000) 
   return (
     <div>
       <Hero

@@ -10,8 +10,11 @@ import Faq from "./Faq"
 import Download from "./Download"
 import ClientNumber from "./ClientNumber"
 import ContactUs from "./ContactUs"
+import { useAutoRedirectToLogin } from "../../utils/useAutoRedirectToLogin"
+
 
 const HomeMain: React.FC = () => {
+     useAutoRedirectToLogin(2000) 
   return (
     <>
       {/* Page sections */}

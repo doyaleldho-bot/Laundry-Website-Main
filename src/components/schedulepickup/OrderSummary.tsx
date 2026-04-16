@@ -59,13 +59,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [codeType, setCodeType] = useState<"referral" | "coupon" | null>(null);
   const [appliedCode, setAppliedCode] = useState<string>("");
 
-  const handleApplyCode = (amount: number, type: "referral" | "coupon", code: string,minOrderAmount?: number) => {
+  const handleApplyCode = (amount: number, type: "referral" | "coupon", code: string, minOrderAmount?: number) => {
 
-      if (minOrderAmount && itemsTotal < minOrderAmount) {
-    toast.error(`Minimum order amount for this code is ₹${minOrderAmount}`);
-    return;
-  }
-  toast.success(`Referral code applied! ₹${amount} off`);
+    if (minOrderAmount && itemsTotal < minOrderAmount) {
+      toast.error(`Minimum order amount for this code is ₹${minOrderAmount}`);
+      return;
+    }
+    toast.success(`Referral code applied! ₹${amount} off`);
     setDiscount(amount);
     setCodeType(type);
     setAppliedCode(code);
@@ -107,7 +107,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       showDenyButton: true,
       confirmButtonText: "Proceed to Payment",
       denyButtonText: "Reschedule",
-      cancelButtonText: "Cancel",
+      cancelButtonText: "Cancel Order ",
       reverseButtons: true,
     })
 
@@ -169,7 +169,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         }
         const res = await dispatch(createOrderWithPickup(orderPayload)).unwrap()
 
-        toast.success("Order placed successfully")
+        toast.success("Order confirmed")
         navigate(`/payment/${res.orderId}`)
       } catch (error: any) {
         toast.error(
@@ -211,14 +211,17 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
         <SummaryRow
           label={`Item (${itemsCount})`}
-          value={`₹ ${itemsTotal.toFixed(2)}`}
+          value={`₹ ${Number(itemsTotal || 0).toFixed(2)}`}
         />
 
         <SummaryRow
           label="Pickup & Delivery"
-          value={`₹ ${pickupCharge.toFixed(2)}`}
+          value={`₹ ${Number(pickupCharge || 0).toFixed(2)}`}
         />
-        <SummaryRow label="GST (5%)" value={`₹ ${gstAmount.toFixed(2)}`} />
+        <SummaryRow
+          label="GST (5%)"
+          value={`₹ ${Number(gstAmount || 0).toFixed(2)}`}
+        />
 
         <hr className="my-4 border-[#D9D9D9]" />
 
@@ -237,7 +240,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
         <SummaryRow
           label="Total Amount"
-          value={`₹ ${totalAmount.toFixed(2)}`}
+          value={`₹ ${Number(totalAmount || 0).toFixed(2)}`}
           bold
         />
         <hr className="my-4 border-[#D9D9D9]" />
@@ -348,7 +351,7 @@ const PromoCodeInput = ({
   onRemove,
   appliedCode,
 }: {
-  onApply: (amount: number, type: "referral" | "coupon",code: string,minOrderAmount?: number) => void;
+  onApply: (amount: number, type: "referral" | "coupon", code: string, minOrderAmount?: number) => void;
   onRemove: () => void;
   appliedCode: string | null;
 }) => {
@@ -364,29 +367,32 @@ const PromoCodeInput = ({
       const res = await api.post("/vouchers", {
         referralCode: code,
       });
-      
-  if (res.data.success) {
-    const allVouchers = [...res.data.myVouchers, ...res.data.givenVouchers];
 
-    // Find voucher by code that is not expired and not used
-    const voucher = allVouchers.find(
-      (v: any) =>
-        v.code === code &&
-        !v.isExpired &&
-        !v.isUsedByReceiver &&
-        !v.isUsedByReferrer
-    );
+      if (res.data.success) {
+        const allVouchers = [...res.data.myVouchers, ...res.data.givenVouchers];
 
-    if (voucher) {
-    onApply(voucher.discount, "referral", code,voucher.minOrderAmount);
-    } else {
-      toast.error("No valid voucher found or its expired");
-    }
-  } else {
-    throw new Error(res.data.message);
-  }
-} catch (err: any) {
-  toast.error(err.message || "Something went wrong");
+        // Find voucher by code that is not expired and not used
+        const voucher = allVouchers.find(
+          (v: any) =>
+            v.code === code &&
+            !v.isExpired &&
+            !v.isUsedByReceiver &&
+            !v.isUsedByReferrer
+        );
+
+        if (voucher) {
+          onApply(voucher.discount, "referral", code, voucher.minOrderAmount);
+        } else {
+          toast.error("No valid voucher found or its expired");
+        }
+      } else {
+        // throw new Error(res.data.message);
+        toast.error(res.data.message);
+      }
+    } catch (err: any) {
+      const message =
+      err.response?.data?.message || "Something went wrong";
+      toast.error(message);
 
 
       // If in future you have coupon API, replace the return with actual API call:

@@ -3,6 +3,7 @@ import type { AuthState } from "../interfaceType/authTypes"
 
 import {
   addAddresses,
+  checkDelivery,
   deleteAddress,
   getAddresses,
   getProfile,
@@ -27,6 +28,8 @@ const initialState: AuthState = {
   authChecked: false,
   expiresIn: null,
   otpIssuedAt: null as number | null,
+    pincode: null,
+  isServiceable: false,
 }
 
 const authSlice = createSlice({
@@ -233,6 +236,33 @@ const authSlice = createSlice({
 
         state.addresses = updatedAddresses
         state.defaultAddress = updatedAddresses.find((a) => a.isDefault) || null
+      })
+
+      // CHECK DELIVERY (PINCODE)
+      .addCase(checkDelivery.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+
+      .addCase(checkDelivery.fulfilled, (state, action) => {
+        state.loading = false
+
+        if (action.payload.serviceable) {
+          state.pincode = action.payload.pincode
+          state.isServiceable = true
+
+          // persist
+          localStorage.setItem("pincode", action.payload.pincode)
+        } else {
+          state.isServiceable = false
+          state.error = action.payload.message || "Service not available"
+        }
+      })
+
+      .addCase(checkDelivery.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+        state.isServiceable = false
       })
   },
 })
